@@ -30,33 +30,97 @@ if (menuButton && navigation) {
       menuButton.focus();
     }
   });
+
   document.addEventListener("click", (event) => {
     if (navigation.hasAttribute("data-open") && !event.target.closest(".site-header")) closeMenu();
   });
 }
 
-const inquiryForm = document.querySelector(".inquiry-form");
-inquiryForm?.addEventListener("submit", (event) => event.preventDefault());
+document.querySelector(".inquiry-form")?.addEventListener("submit", (event) => event.preventDefault());
 
-const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const canAnimate = !prefersReducedMotion && "IntersectionObserver" in window;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const canAnimate = !reduceMotion.matches && "IntersectionObserver" in window;
+const motionButton = document.querySelector(".motion-toggle");
+let motionPaused = false;
+
+if (canAnimate && motionButton) {
+  motionButton.addEventListener("click", () => {
+    motionPaused = !motionPaused;
+    document.documentElement.classList.toggle("motion-paused", motionPaused);
+    motionButton.setAttribute("aria-pressed", String(motionPaused));
+    motionButton.setAttribute("aria-label", motionPaused ? "Reanudar animaciones" : "Pausar animaciones");
+    motionButton.querySelector(".motion-toggle-text").textContent = motionPaused ? "Reanudar movimiento" : "Pausar movimiento";
+  });
+}
 
 if (canAnimate) {
-  const rows = [...document.querySelectorAll(".services-followup, .method-copy")];
-  const enterObserver = new IntersectionObserver((entries) => {
+  const revealTargets = [
+    ...document.querySelectorAll(".services-intro, .service-row, .services-bridge, .sectors-intro, .sector-item, .services-followup, .method-copy, .coverage-intro, .coverage-list li, .contact-copy, .contact-form-wrap")
+  ];
+  const revealObserver = new IntersectionObserver((entries) => {
     for (const entry of entries) {
-      if (entry.isIntersecting) entry.target.classList.add("is-in-view");
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-in-view");
+        revealObserver.unobserve(entry.target);
+      }
     }
-  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.1 });
-  for (const row of rows) {
-    const bounds = row.getBoundingClientRect();
-    if (bounds.top < window.innerHeight * .92 && bounds.bottom > 0) row.classList.add("is-in-view");
-    enterObserver.observe(row);
+  }, { rootMargin: "0px 0px -7% 0px", threshold: 0.08 });
+
+  revealTargets.forEach((target, index) => {
+    target.classList.add("will-reveal");
+    if (target.matches(".service-row, .sector-item, .coverage-list li")) {
+      target.style.setProperty("--reveal-delay", `${(index % 4) * 90}ms`);
+    }
+    const bounds = target.getBoundingClientRect();
+    if (bounds.top < window.innerHeight * .93 && bounds.bottom > 0) {
+      target.classList.add("is-in-view");
+    } else {
+      revealObserver.observe(target);
+    }
+  });
+
+  const heroStage = document.querySelector(".hero-stage");
+  if (heroStage) {
+    const heroVisibility = new IntersectionObserver(([entry]) => {
+      heroStage.classList.toggle("is-idle", !entry.isIntersecting);
+    });
+    heroVisibility.observe(heroStage);
+  }
+  document.addEventListener("visibilitychange", () => {
+    document.documentElement.classList.toggle("motion-hidden", document.hidden);
+  });
+
+  for (const details of document.querySelectorAll(".sector-item")) {
+    const summary = details.querySelector("summary");
+    const content = details.querySelector(".sector-offerings");
+    if (!summary || !content || !content.animate) continue;
+    let activeAnimation;
+    summary.addEventListener("click", (event) => {
+      if (motionPaused || reduceMotion.matches) return;
+      event.preventDefault();
+      activeAnimation?.finish();
+      const opening = !details.open;
+      if (opening) details.open = true;
+      const height = content.scrollHeight;
+      content.style.overflow = "hidden";
+      activeAnimation = content.animate(
+        opening
+          ? [{ height: "0px", opacity: 0, transform: "translateY(-12px)" }, { height: `${height}px`, opacity: 1, transform: "translateY(0)" }]
+          : [{ height: `${height}px`, opacity: 1, transform: "translateY(0)" }, { height: "0px", opacity: 0, transform: "translateY(-12px)" }],
+        { duration: opening ? 440 : 320, easing: "cubic-bezier(.22, 1, .36, 1)" }
+      );
+      activeAnimation.onfinish = () => {
+        if (!opening) details.open = false;
+        content.style.overflow = "";
+        activeAnimation = undefined;
+      };
+    });
   }
 
   document.documentElement.classList.add("motion-ready");
 
   const header = document.querySelector(".site-header");
+  const hero = document.querySelector(".hero");
   const manifesto = document.querySelector(".manifesto");
   const method = document.querySelector(".method");
   const sequence = document.querySelector(".method-sequence");
@@ -70,40 +134,43 @@ if (canAnimate) {
     const viewportHeight = window.innerHeight;
     const scrollable = document.documentElement.scrollHeight - viewportHeight;
     const pageRatio = scrollable > 0 ? clamp(window.scrollY / scrollable) : 0;
+    const heroBounds = hero?.getBoundingClientRect();
     const manifestoBounds = manifesto?.getBoundingClientRect();
     const methodBounds = method?.getBoundingClientRect();
     const sequenceBounds = sequence && !desktopScene.matches ? sequence.getBoundingClientRect() : null;
     const sequenceHeight = sequence?.clientHeight ?? 0;
-    let manifestoRatio;
-    let methodRatio;
-
-    if (manifestoBounds) {
-      const start = viewportHeight * .72;
-      const end = viewportHeight * .18;
-      manifestoRatio = clamp((start - manifestoBounds.top) / Math.max(1, manifestoBounds.height + start - end));
-    }
-
-    if (methodBounds && sequence) {
-      if (desktopScene.matches) {
-        const range = Math.max(1, methodBounds.height - viewportHeight);
-        methodRatio = clamp(-methodBounds.top / range);
-      } else {
-        const focusLine = viewportHeight * .62;
-        methodRatio = clamp((focusLine - sequenceBounds.top - 37) / Math.max(1, sequenceBounds.height - 74));
-      }
-    }
 
     if (header) {
       header.style.setProperty("--scroll-progress", String(pageRatio));
       header.classList.toggle("is-scrolled", window.scrollY > 16);
     }
-    if (manifestoRatio !== undefined) manifesto.style.setProperty("--manifesto-progress", `${(manifestoRatio * 100).toFixed(2)}%`);
-    if (methodRatio !== undefined) {
-      sequence.style.setProperty("--method-progress", String(methodRatio));
-      sequence.style.setProperty("--method-marker-y", `${25 + methodRatio * Math.max(0, sequenceHeight - 74)}px`);
-      methodSteps.forEach((step, index) => {
-        step.classList.toggle("is-active", methodRatio >= index / methodSteps.length);
-      });
+    if (motionPaused) return;
+
+    if (heroBounds && heroStage) {
+      const progress = clamp(-heroBounds.top / Math.max(1, heroBounds.height));
+      heroStage.style.setProperty("--hero-shift", `${(-38 * progress).toFixed(1)}px`);
+      heroStage.style.setProperty("--hero-scale", String((1 - .08 * progress).toFixed(3)));
+    }
+
+    if (manifestoBounds) {
+      const start = viewportHeight * .72;
+      const end = viewportHeight * .18;
+      const ratio = clamp((start - manifestoBounds.top) / Math.max(1, manifestoBounds.height + start - end));
+      manifesto.style.setProperty("--manifesto-progress", `${(ratio * 100).toFixed(2)}%`);
+    }
+
+    if (methodBounds && sequence) {
+      let ratio;
+      if (desktopScene.matches) {
+        const range = Math.max(1, methodBounds.height - viewportHeight);
+        ratio = clamp(-methodBounds.top / range);
+      } else {
+        const focusLine = viewportHeight * .62;
+        ratio = clamp((focusLine - sequenceBounds.top - 37) / Math.max(1, sequenceBounds.height - 74));
+      }
+      sequence.style.setProperty("--method-progress", String(ratio));
+      sequence.style.setProperty("--method-marker-y", `${25 + ratio * Math.max(0, sequenceHeight - 74)}px`);
+      methodSteps.forEach((step, index) => step.classList.toggle("is-active", ratio >= index / methodSteps.length));
     }
   };
 
