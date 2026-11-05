@@ -348,9 +348,9 @@ section[id] { scroll-margin-top: 94px; }
 .hero-stage-caption { position: absolute; right: 0; bottom: 3%; left: 0; color: #aabbe9; font-size: 11px; letter-spacing: .02em; text-align: center; }
 .hero-linework { bottom: 42px; }
 .hero-linework-mark { width: 15px; height: 15px; }
-.services { padding-bottom: clamp(90px, 8vw, 130px); }
+.services { overflow: clip; padding-bottom: clamp(90px, 8vw, 130px); }
 .services-bridge { max-width: 580px; margin: 34px 0 0 auto; color: var(--muted); font: 500 17px/1.5 Manrope, Arial, sans-serif; text-align: right; }
-.sectors { background: #ecf2ff; }
+.sectors { overflow: clip; background: #ecf2ff; }
 .sectors-intro { grid-template-columns: minmax(0,.58fr) minmax(0,.42fr); margin-bottom: 52px; }
 .sector-list { border-top: 1px solid #9fafcf; border-bottom: 1px solid #9fafcf; }
 .sector-item { border-bottom: 1px solid #bac8e4; }
