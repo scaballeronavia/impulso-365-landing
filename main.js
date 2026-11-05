@@ -125,6 +125,7 @@ if (canAnimate) {
   const method = document.querySelector(".method");
   const sequence = document.querySelector(".method-sequence");
   const methodSteps = sequence ? [...sequence.querySelectorAll(".method-steps li")] : [];
+  const serviceRows = [...document.querySelectorAll(".service-row")];
   const desktopScene = window.matchMedia("(min-width: 901px) and (min-height: 680px)");
   const clamp = (value) => Math.min(1, Math.max(0, value));
   let framePending = false;
@@ -145,6 +146,20 @@ if (canAnimate) {
       header.classList.toggle("is-scrolled", window.scrollY > 16);
     }
     if (motionPaused) return;
+
+    const focusLine = viewportHeight * .58;
+    let focusedRow = null;
+    let nearestDistance = Infinity;
+    for (const row of serviceRows) {
+      const bounds = row.getBoundingClientRect();
+      if (bounds.top > viewportHeight * .9 || bounds.bottom < viewportHeight * .2) continue;
+      const distance = Math.abs((bounds.top + bounds.bottom) / 2 - focusLine);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        focusedRow = row;
+      }
+    }
+    serviceRows.forEach((row) => row.classList.toggle("is-spotlight", row === focusedRow));
 
     if (heroBounds && heroStage) {
       const progress = clamp(-heroBounds.top / Math.max(1, heroBounds.height));
