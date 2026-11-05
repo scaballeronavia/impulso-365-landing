@@ -604,6 +604,64 @@ section[id] { scroll-margin-top: 94px; }
   .method-steps li.is-active { transform: translateX(5px); }
 }
 
+/* Sector narrative: an editorial index, not a grid of cards. */
+.sectors-intro h2 { overflow: hidden; }
+.sector-title-ink { display: block; }
+.sector-item { position: relative; }
+.sector-item summary { padding-inline: 12px; transition: background-color 300ms ease; }
+.sector-item .sector-title strong { transition: color 300ms ease; }
+.sector-item[open] .sector-title strong { color: var(--blue); }
+.sector-item summary:hover,
+.sector-item summary:focus-visible { background: transparent; }
+.sector-item summary:hover .sector-title strong { color: var(--blue); }
+.sector-item .sector-symbol { transition: transform 420ms var(--ease), background-color 300ms ease, border-color 300ms ease; }
+.sector-item .sector-toggle { transition: transform 300ms var(--ease), background-color 300ms ease, border-color 300ms ease; }
+.sector-item:where(.is-current,[open]) .sector-symbol,
+.sector-item:focus-within .sector-symbol { border-color: var(--blue); background: rgba(255,255,255,.55); }
+.sector-item:nth-child(1):where(.is-current,[open]) .sector-symbol,
+.sector-item:nth-child(1):focus-within .sector-symbol { transform: scale(1.1); }
+.sector-item:nth-child(2):where(.is-current,[open]) .sector-symbol,
+.sector-item:nth-child(2):focus-within .sector-symbol { transform: translate(3px,-3px); }
+.sector-item:nth-child(3):where(.is-current,[open]) .sector-symbol,
+.sector-item:nth-child(3):focus-within .sector-symbol { transform: rotate(25deg); }
+.sector-item:focus-within .sector-toggle { border-color: var(--blue); }
+.sector-offerings li { transition: border-color 280ms ease; }
+.sector-item[open] .sector-offerings li { border-color: rgba(31,79,255,.28); }
+
+@media (min-width: 1101px) {
+  .sectors { overflow: visible; }
+  .sectors > .container { display: grid; grid-template-columns: minmax(0,.43fr) minmax(0,.57fr); gap: 0 clamp(68px,7vw,112px); align-items: start; }
+  .sectors-intro { display: block; position: sticky; top: 140px; grid-row: 1 / span 2; margin: 0; }
+  .sectors-intro .section-label { margin-bottom: 28px; }
+  .sectors-intro h2 { margin-bottom: 28px; font-size: clamp(3.5rem,4.5vw,5.15rem); line-height: 1.1; }
+  .sectors-intro > p:last-child { max-width: 410px; margin: 0; }
+  .sector-list { position: relative; padding-left: 27px; border-left: 1px solid rgba(31,79,255,.28); }
+  .sector-list::before { content: ''; position: absolute; top: 0; bottom: 0; left: -2px; width: 3px; background: var(--orange); transform: scaleY(var(--sector-progress,0)); transform-origin: top; pointer-events: none; }
+  .services-followup { grid-column: 2; }
+}
+
+@media (max-width: 1100px) {
+  .sectors-intro { margin-bottom: 52px; }
+}
+
+@media (max-width: 600px) {
+  .sector-item summary { padding-inline: 4px; }
+  .sector-item.is-current summary { background: transparent; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .js.motion-ready .sectors-intro.is-in-view .sector-title-ink { animation: sector-title-enter 800ms var(--ease) both; }
+  .js.motion-ready .sectors-intro.is-in-view > p:last-child { animation: sector-copy-enter 700ms var(--ease) 140ms both; }
+  .js.motion-ready .sector-item[open] .sector-offerings li { animation: sector-offering-enter 480ms var(--ease) both; }
+  .js.motion-ready .sector-item[open] .sector-offerings li:nth-child(2) { animation-delay: 70ms; }
+  .js.motion-ready .sector-item[open] .sector-offerings li:nth-child(3) { animation-delay: 140ms; }
+}
+@keyframes sector-title-enter { from { opacity: .72; clip-path: inset(0 0 12% 0); transform: translateY(18px); } to { opacity: 1; clip-path: inset(0 0 0 0); transform: translateY(0); } }
+@keyframes sector-copy-enter { from { opacity: .7; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes sector-offering-enter { from { opacity: .65; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+.motion-paused .sectors .sector-title-ink,
+.motion-paused .sectors .sector-offerings li { animation: none !important; opacity: 1 !important; transform: none !important; clip-path: none !important; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }

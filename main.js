@@ -145,6 +145,9 @@ if (canAnimate) {
   const sequence = document.querySelector(".method-sequence");
   const methodSteps = sequence ? [...sequence.querySelectorAll(".method-steps li")] : [];
   const serviceRows = [...document.querySelectorAll(".service-row")];
+  const sectorSection = document.querySelector(".sectors");
+  const sectorList = document.querySelector(".sector-list");
+  const sectorRows = [...document.querySelectorAll(".sector-item")];
   const desktopScene = window.matchMedia("(min-width: 901px) and (min-height: 680px)");
   const finePointer = window.matchMedia("(pointer: fine) and (min-width: 901px)");
   const clamp = (value) => Math.min(1, Math.max(0, value));
@@ -175,6 +178,11 @@ if (canAnimate) {
     const methodBounds = method?.getBoundingClientRect();
     const sequenceBounds = sequence && !desktopScene.matches ? sequence.getBoundingClientRect() : null;
     const sequenceHeight = sequence?.clientHeight ?? 0;
+    const sectorBounds = sectorSection?.getBoundingClientRect();
+    const sectorListBounds = sectorList?.getBoundingClientRect();
+    const visibleSectors = sectorBounds && sectorBounds.top < viewportHeight && sectorBounds.bottom > 0
+      ? sectorRows.map((row) => ({ row, bounds: row.getBoundingClientRect() }))
+      : [];
 
     if (header) {
       header.style.setProperty("--scroll-progress", String(pageRatio));
@@ -196,6 +204,22 @@ if (canAnimate) {
       }
     }
     serviceRows.forEach((row) => row.classList.toggle("is-spotlight", row === focusedRow));
+
+    if (sectorListBounds && sectorList) {
+      const sectorProgress = clamp((viewportHeight * .5 - sectorListBounds.top) / Math.max(1, sectorListBounds.height));
+      sectorList.style.setProperty("--sector-progress", String(sectorProgress));
+      let focusedSector = null;
+      let nearestSector = Infinity;
+      for (const { row, bounds } of visibleSectors) {
+        if (bounds.top > viewportHeight * .9 || bounds.bottom < viewportHeight * .12) continue;
+        const distance = Math.abs((bounds.top + bounds.bottom) / 2 - viewportHeight * .52);
+        if (distance < nearestSector) {
+          nearestSector = distance;
+          focusedSector = row;
+        }
+      }
+      sectorRows.forEach((row) => row.classList.toggle("is-current", row === focusedSector));
+    }
 
     if (heroBounds && heroStage) {
       const progress = clamp(-heroBounds.top / Math.max(1, heroBounds.height));
