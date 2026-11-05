@@ -42,6 +42,25 @@ const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const canAnimate = !reduceMotion.matches && "IntersectionObserver" in window;
 const motionButton = document.querySelector(".motion-toggle");
 let motionPaused = false;
+const sectionLinks = [...document.querySelectorAll('.primary-nav a[href^="#"]')].map((link) => ({
+  link,
+  section: document.querySelector(link.getAttribute("href"))
+})).filter(({ section }) => section);
+let activeSection = null;
+const updateCurrentNav = () => {
+  const focusLine = window.innerHeight * .34;
+  let currentSection = sectionLinks[0]?.section;
+  for (const { section } of sectionLinks) {
+    const bounds = section.getBoundingClientRect();
+    if (bounds.top <= focusLine) currentSection = section;
+  }
+  if (currentSection === activeSection) return;
+  activeSection = currentSection;
+  sectionLinks.forEach(({ link, section }) => {
+    if (section === currentSection) link.setAttribute("aria-current", "location");
+    else link.removeAttribute("aria-current");
+  });
+};
 
 if (canAnimate && motionButton) {
   motionButton.addEventListener("click", () => {
@@ -55,7 +74,7 @@ if (canAnimate && motionButton) {
 
 if (canAnimate) {
   const revealTargets = [
-    ...document.querySelectorAll(".services-intro, .service-row, .services-bridge, .sectors-intro, .sector-item, .services-followup, .method-copy, .coverage-intro, .coverage-list li, .contact-copy, .contact-form-wrap")
+    ...document.querySelectorAll(".services-intro, .service-row, .services-bridge, .sectors-intro, .sector-item, .services-followup, .method-copy, .coverage-intro, .coverage-list li, .contact-copy, .contact-form-wrap, .site-footer")
   ];
   const revealObserver = new IntersectionObserver((entries) => {
     for (const entry of entries) {
@@ -64,7 +83,7 @@ if (canAnimate) {
         revealObserver.unobserve(entry.target);
       }
     }
-  }, { rootMargin: "0px 0px -7% 0px", threshold: 0.08 });
+  }, { rootMargin: "0px 0px 12% 0px", threshold: 0.01 });
 
   revealTargets.forEach((target, index) => {
     target.classList.add("will-reveal");
@@ -127,8 +146,24 @@ if (canAnimate) {
   const methodSteps = sequence ? [...sequence.querySelectorAll(".method-steps li")] : [];
   const serviceRows = [...document.querySelectorAll(".service-row")];
   const desktopScene = window.matchMedia("(min-width: 901px) and (min-height: 680px)");
+  const finePointer = window.matchMedia("(pointer: fine) and (min-width: 901px)");
   const clamp = (value) => Math.min(1, Math.max(0, value));
   let framePending = false;
+
+  if (hero && heroStage) {
+    hero.addEventListener("pointermove", (event) => {
+      if (motionPaused || !finePointer.matches) return;
+      const bounds = heroStage.getBoundingClientRect();
+      const x = Math.max(-1, Math.min(1, (event.clientX - bounds.left - bounds.width / 2) / (bounds.width / 2)));
+      const y = Math.max(-1, Math.min(1, (event.clientY - bounds.top - bounds.height / 2) / (bounds.height / 2)));
+      heroStage.style.setProperty("--pointer-x", `${(x * 8).toFixed(1)}px`);
+      heroStage.style.setProperty("--pointer-y", `${(y * 8).toFixed(1)}px`);
+    }, { passive: true });
+    hero.addEventListener("pointerleave", () => {
+      heroStage.style.setProperty("--pointer-x", "0px");
+      heroStage.style.setProperty("--pointer-y", "0px");
+    });
+  }
 
   const updateScrollState = () => {
     framePending = false;
@@ -145,6 +180,7 @@ if (canAnimate) {
       header.style.setProperty("--scroll-progress", String(pageRatio));
       header.classList.toggle("is-scrolled", window.scrollY > 16);
     }
+    updateCurrentNav();
     if (motionPaused) return;
 
     const focusLine = viewportHeight * .58;
@@ -200,4 +236,8 @@ if (canAnimate) {
   window.addEventListener("pageshow", scheduleScrollState);
   document.fonts?.ready.then(scheduleScrollState);
   scheduleScrollState();
+} else {
+  window.addEventListener("scroll", updateCurrentNav, { passive: true });
+  window.addEventListener("resize", updateCurrentNav);
+  updateCurrentNav();
 }
