@@ -34,12 +34,12 @@ docker compose logs -f app-web
 docker compose down
 ```
 
-La landing queda disponible en <http://localhost:8003>.
+La landing queda disponible en <http://localhost:8004>.
 
 Detalles de la configuración:
 
 - `Dockerfile`: parte de `nginx:alpine`, cambia el `listen` del sitio por defecto a `8000`, copia el contenido del repositorio en `/usr/share/nginx/html` y arranca Nginx con `CMD ["nginx", "-g", "daemon off;"]`.
-- `docker-compose.yaml`: servicio `app-web` construido desde el contexto actual, contenedor `impulso365-landing`, puerto publicado `127.0.0.1:8003:8000` (host → contenedor) y política `restart: unless-stopped`.
+- `docker-compose.yaml`: servicio `app-web` construido desde el contexto actual, contenedor `impulso365-landing`, puerto publicado `127.0.0.1:8004:8000` (host → contenedor) y política `restart: unless-stopped`.
 
 El puerto está atado a `127.0.0.1`, de modo que el contenedor no queda expuesto a la red: solo es accesible de forma local y, en producción, a través de Caddy (ver la sección siguiente).
 
@@ -65,7 +65,7 @@ Abre <http://localhost:8000> en el navegador. Todas las rutas del sitio son rela
 
 ## Producción (Caddy)
 
-En producción la landing se publica con Docker Compose y el acceso público lo resuelve Caddy, que actúa como reverse proxy hacia el puerto `8003` del contenedor (el puerto interno `8000` de Nginx), es decir `127.0.0.1:8003`.
+En producción la landing se publica con Docker Compose y el acceso público lo resuelve Caddy, que actúa como reverse proxy hacia el puerto `8004` del contenedor (el puerto interno `8000` de Nginx), es decir `127.0.0.1:8004`.
 
 Caddy se encarga del dominio, los certificados TLS y la redirección de HTTP a HTTPS; el contenedor Nginx queda detrás, sin exposición directa a internet.
 
@@ -73,7 +73,7 @@ Ejemplo de `Caddyfile`:
 
 ```
 impulso365.dev {
-    reverse_proxy 127.0.0.1:8003
+    reverse_proxy 127.0.0.1:8004
 }
 ```
 
