@@ -20,9 +20,10 @@ Landing estática con tres rutas localizadas, selector de idioma, menú responsi
 | Recursos gráficos | PASS en referencias locales. Ninguna imagen completada falló en la vista final; las imágenes fuera de pantalla usan carga diferida. No se detectaron errores de consola. |
 | SEO e internacionalización | PASS estático. Canonical, `hreflang`, títulos, descripciones y URL Open Graph coinciden con cada idioma. Sitemap contiene las tres rutas. |
 | Open Graph y X Cards | PASS local. Tres PNG de 1200 × 630 px (aprox. 330 KB) enlazados por idioma; etiquetas completas en HTML inicial; la vista dinámica también cambia imagen, locale, URL y texto alternativo. La imagen española cargó desde la vista previa local con dimensiones correctas. |
+| Foto de Jorge Kano | PASS en el sitio público. El retrato actualizado carga en español, inglés y portugués brasileño desde `assets/team/jorge-kano.jpg?v=20261112-jorge2` (655 × 873 px). |
 | Accesibilidad básica | PASS en comprobaciones de estructura: un H1 por página, texto alternativo y dimensiones para imágenes, etiquetas para campos, foco visible, enlaces/controles semánticos y estados anunciados. |
 | Sintaxis y generación | PASS. `scripts/build_i18n.py` se ejecutó y `node --check` terminó sin errores en `site/main.js` y `site/language-init.js`. El sitio no tiene build de producción ni suite de pruebas configurada. |
-| GitHub Pages | PASS. Commit `718597b` desplegado. Se abrieron las rutas ES, EN y PT-BR; títulos, idiomas, URL e imagen Open Graph coinciden. Las tres imágenes se cargaron desde HTTPS y se decodificaron a 1200 × 630; sin errores de consola. |
+| GitHub Pages | PASS. QA base en commit `718597b`; el retrato nuevo se publicó en `5c34f24` y se confirmó cargado en las tres rutas ES, EN y PT-BR. Los títulos, idiomas, URL e imagen Open Graph de la verificación base coinciden. Las tres imágenes sociales se cargaron desde HTTPS y se decodificaron a 1200 × 630; sin errores de consola. |
 
 ## Alcance de verificación y pendientes
 
