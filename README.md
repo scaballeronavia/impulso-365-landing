@@ -1,19 +1,26 @@
-# Impulso 365 — demostración de landing
+# Impulso 365 — sitio público
 
-Landing estática para revisión del cliente. El formulario está preparado, pero el envío permanece deshabilitado hasta configurar receptor y aviso de privacidad.
+Landing empresarial estática disponible en español, inglés y portugués brasileño.
 
-Se publica únicamente el código, los activos necesarios para la página y el [informe de QA de presencia y ecosistema](qa/qa-presencia-ecosistema-2026-11-05.md). Los documentos de trabajo y materiales fuente permanecen fuera de este repositorio.
+URL pública: <https://scaballeronavia.github.io/impulso-365-landing/>.
 
-## Estructura del proyecto
+El formulario permanece preparado sin envío hasta configurar receptor y aviso de privacidad. Se publica únicamente la web, sus recursos y los informes QA; los documentos y materiales internos del proyecto permanecen fuera de este repositorio.
+
+- [Informe de QA de la landing (12 nov. 2026)](qa/qa-landing-2026-11-12.md)
+- [Informe de QA de presencia y ecosistema](qa/qa-presencia-ecosistema-2026-11-05.md)
+
+## Estructura del sitio
 
 | Archivo | Contenido |
 | --- | --- |
-| `index.html` | Estructura y contenido de la landing. |
+| `index.html` | Landing en español y metadatos sociales. |
+| `en/`, `pt-br/` | Páginas estáticas completas en inglés y portugués brasileño. |
 | `styles.css` | Estilos, diseño responsive y animaciones. |
-| `main.js` | Interacciones: menú móvil, animaciones al hacer scroll y pausa de movimiento. |
-| `assets/` | Logotipos de marca y banderas SVG de cobertura. |
-| `qa/` | Informe de QA de presencia y ecosistema. |
-| `Dockerfile` | Imagen Nginx que sirve la landing. |
+| `main.js`, `language-init.js` | Menú, animaciones, selector y preferencia de idioma. |
+| `assets/` | Recursos visuales, banderas, fotos autorizadas e imágenes sociales. |
+| `sitemap.xml` | Rutas públicas por idioma. |
+| `qa/` | Informes de verificación técnica. |
+| `Dockerfile` | Imagen Nginx para servir la landing. |
 | `docker-compose.yaml` | Orquestación del contenedor. |
 
 ## Ejecución con Docker
@@ -43,7 +50,7 @@ Detalles de la configuración:
 
 El puerto está atado a `127.0.0.1`, de modo que el contenedor no queda expuesto a la red: solo es accesible de forma local y, en producción, a través de Caddy (ver la sección siguiente).
 
-Tras modificar `index.html`, `styles.css` o `main.js`, vuelve a construir la imagen para publicar los cambios:
+Tras modificar archivos de la landing, vuelve a construir la imagen para actualizar el contenedor:
 
 ```bash
 docker compose up -d --build
@@ -61,7 +68,7 @@ python3 -m http.server 8000
 npx serve -l 8000
 ```
 
-Abre <http://localhost:8000> en el navegador. Todas las rutas del sitio son relativas, por lo que funciona desde la raíz del repositorio sin ajustes adicionales. El formulario de contacto mantiene el envío deshabilitado también en local, igual que en producción.
+Abre <http://localhost:8000>. Todas las rutas del sitio son relativas y funcionan desde la raíz del repositorio. El formulario de contacto mantiene el envío deshabilitado.
 
 ## Producción (Caddy)
 
@@ -77,4 +84,4 @@ impulso365.dev {
 }
 ```
 
-Caddy emite y renueva los certificados automáticamente. Tras actualizar la landing en el servidor, `docker compose up -d --build` vuelve a publicar la versión nueva sin necesidad de tocar la configuración de Caddy.
+Caddy emite y renueva los certificados automáticamente. El workflow de despliegue automático se ejecuta cuando se combina un pull request a `main`; las actualizaciones directas de GitHub Pages se publican desde la rama principal.

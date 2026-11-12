@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 960" role="img" aria-labelledby="title">
+  <title id="title">Retrato no disponible</title>
+  <rect width="800" height="960" fill="#0B1437"/>
+  <circle cx="400" cy="370" r="142" fill="#1F4FFF"/>
+  <path d="M120 960c18-207 125-306 280-306s262 99 280 306" fill="#1F4FFF"/>
+  <circle cx="400" cy="370" r="177" fill="none" stroke="#5B9BFF" stroke-width="2" opacity=".65"/>
+  <path d="M75 170h155M570 790h155" stroke="#FF6A1F" stroke-width="8"/>
+</svg>

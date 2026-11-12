@@ -1,5 +1,113 @@
 document.documentElement.classList.add("js");
 
+// The three crawlable HTML pages share one structure. Switching languages
+// updates only copy and descriptive attributes, preserving scroll, form input
+// and the existing motion state without rebuilding the page.
+const siteRoot = new URL(".", document.currentScript.src);
+const localePaths = { es: "", en: "en/", "pt-BR": "pt-br/" };
+const languageLinks = [...document.querySelectorAll(".language-switch a[data-lang]")];
+const localeCache = new Map();
+let currentLocale = document.documentElement.lang || "es";
+let localeRequest = 0;
+const uiCopy = {
+  es: { open: "Abrir menú", close: "Cerrar menú", pause: "Pausar animaciones", resume: "Reanudar animaciones", pauseText: "Pausar movimiento", resumeText: "Reanudar movimiento", photo: "Fotografía no disponible de" },
+  en: { open: "Open menu", close: "Close menu", pause: "Pause animations", resume: "Resume animations", pauseText: "Pause motion", resumeText: "Resume motion", photo: "Photo unavailable for" },
+  "pt-BR": { open: "Abrir menu", close: "Fechar menu", pause: "Pausar animações", resume: "Retomar animações", pauseText: "Pausar animações", resumeText: "Retomar animações", photo: "Foto indisponível de" }
+};
+
+for (const element of document.querySelectorAll("img[src], link[href], script[src]")) {
+  for (const field of ("src" in element ? ["src"] : ["href"])) {
+    const value = element.getAttribute(field);
+    if (value?.startsWith("./") || value?.startsWith("../")) element.setAttribute(field, new URL(value, location.href).href);
+  }
+}
+const bodyTextNodes = (root) => {
+  const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  return nodes;
+};
+const localeFromPath = (path) => path.startsWith(siteRoot.pathname + "en/") ? "en" : path.startsWith(siteRoot.pathname + "pt-br/") ? "pt-BR" : "es";
+const localeUrl = (locale) => new URL(localePaths[locale] + location.hash, siteRoot);
+const updateLanguageLinks = () => {
+  for (const link of languageLinks) {
+    const locale = link.dataset.lang;
+    link.href = localeUrl(locale).href;
+    if (locale === currentLocale) link.setAttribute("aria-current", "true");
+    else link.removeAttribute("aria-current");
+  }
+};
+const refreshDynamicLabels = () => {
+  const words = uiCopy[currentLocale];
+  const menu = document.querySelector(".menu-toggle");
+  if (menu) menu.setAttribute("aria-label", menu.getAttribute("aria-expanded") === "true" ? words.close : words.open);
+  const motion = document.querySelector(".motion-toggle");
+  if (motion) {
+    const paused = motion.getAttribute("aria-pressed") === "true";
+    motion.setAttribute("aria-label", paused ? words.resume : words.pause);
+    motion.querySelector(".motion-toggle-text").textContent = paused ? words.resumeText : words.pauseText;
+  }
+};
+const loadLocale = async (locale) => {
+  if (!localeCache.has(locale)) {
+    const url = new URL(localePaths[locale], siteRoot);
+    localeCache.set(locale, fetch(url).then(async (response) => {
+      if (!response.ok) throw new Error(`Language page unavailable: ${locale}`);
+      return new DOMParser().parseFromString(await response.text(), "text/html");
+    }));
+  }
+  return localeCache.get(locale);
+};
+const applyLocale = async (locale, push = true) => {
+  const request = ++localeRequest;
+  if (locale === currentLocale) return;
+  const target = await loadLocale(locale);
+  if (request !== localeRequest) return;
+  const sourceNodes = bodyTextNodes(document.body);
+  const targetNodes = bodyTextNodes(target.body);
+  if (sourceNodes.length !== targetNodes.length) throw new Error("Language pages have different structures");
+  const attributes = [];
+  for (const field of ["aria-label", "alt"]) {
+    const source = [...document.body.querySelectorAll(`[${field}]`)];
+    const translated = [...target.body.querySelectorAll(`[${field}]`)];
+    if (source.length !== translated.length) throw new Error(`Language attributes differ: ${field}`);
+    attributes.push({ field, source, translated });
+  }
+  sourceNodes.forEach((node, index) => { node.nodeValue = targetNodes[index].nodeValue; });
+  for (const { field, source, translated } of attributes) {
+    source.forEach((element, index) => element.setAttribute(field, translated[index].getAttribute(field)));
+  }
+  document.documentElement.lang = locale;
+  document.title = target.title;
+  for (const selector of ['meta[name="description"]', 'meta[property^="og:"]', 'meta[name^="twitter:"]', 'link[rel="canonical"]']) {
+    const current = [...document.querySelectorAll(selector)];
+    const translated = [...target.querySelectorAll(selector)];
+    if (current.length !== translated.length) throw new Error(`Metadata differs: ${selector}`);
+    current.forEach((element, index) => {
+      const field = element.tagName === "LINK" ? "href" : "content";
+      element.setAttribute(field, translated[index].getAttribute(field));
+    });
+  }
+  currentLocale = locale;
+  try { localStorage.setItem("impulso365-language", locale); } catch {}
+  if (push) history.pushState({ locale }, "", localeUrl(locale));
+  updateLanguageLinks();
+  refreshDynamicLabels();
+};
+languageLinks.forEach((link) => link.addEventListener("click", async (event) => {
+  if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  const locale = link.dataset.lang;
+  try { await applyLocale(locale); } catch { location.assign(link.href); }
+}));
+window.addEventListener("popstate", () => {
+  const locale = localeFromPath(location.pathname);
+  applyLocale(locale, false).catch(() => location.reload());
+  updateLanguageLinks();
+});
+window.addEventListener("hashchange", updateLanguageLinks);
+updateLanguageLinks();
+
 const menuButton = document.querySelector(".menu-toggle");
 const navigation = document.querySelector(".primary-nav");
 
@@ -7,7 +115,7 @@ if (menuButton && navigation) {
   const closeMenu = () => {
     navigation.removeAttribute("data-open");
     menuButton.setAttribute("aria-expanded", "false");
-    menuButton.setAttribute("aria-label", "Abrir menú");
+    menuButton.setAttribute("aria-label", uiCopy[currentLocale].open);
   };
 
   menuButton.addEventListener("click", () => {
@@ -16,7 +124,7 @@ if (menuButton && navigation) {
     } else {
       navigation.setAttribute("data-open", "");
       menuButton.setAttribute("aria-expanded", "true");
-      menuButton.setAttribute("aria-label", "Cerrar menú");
+      menuButton.setAttribute("aria-label", uiCopy[currentLocale].close);
     }
   });
 
@@ -37,6 +145,13 @@ if (menuButton && navigation) {
 }
 
 document.querySelector(".inquiry-form")?.addEventListener("submit", (event) => event.preventDefault());
+for (const portrait of document.querySelectorAll(".team-portrait img[data-fallback-name]")) {
+  portrait.addEventListener("error", () => {
+    portrait.src = new URL("assets/team/avatar-neutral.svg", siteRoot).href;
+    portrait.alt = `${uiCopy[currentLocale].photo} ${portrait.dataset.fallbackName}`;
+    portrait.removeAttribute("data-fallback-name");
+  }, { once: true });
+}
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const canAnimate = !reduceMotion.matches && "IntersectionObserver" in window;
@@ -67,14 +182,14 @@ if (canAnimate && motionButton) {
     motionPaused = !motionPaused;
     document.documentElement.classList.toggle("motion-paused", motionPaused);
     motionButton.setAttribute("aria-pressed", String(motionPaused));
-    motionButton.setAttribute("aria-label", motionPaused ? "Reanudar animaciones" : "Pausar animaciones");
-    motionButton.querySelector(".motion-toggle-text").textContent = motionPaused ? "Reanudar movimiento" : "Pausar movimiento";
+    motionButton.setAttribute("aria-label", motionPaused ? uiCopy[currentLocale].resume : uiCopy[currentLocale].pause);
+    motionButton.querySelector(".motion-toggle-text").textContent = motionPaused ? uiCopy[currentLocale].resumeText : uiCopy[currentLocale].pauseText;
   });
 }
 
 if (canAnimate) {
   const revealTargets = [
-    ...document.querySelectorAll(".services-intro, .service-row, .services-bridge, .sectors-intro, .sector-item, .services-followup, .method-copy, .coverage-intro, .coverage-list li, .contact-copy, .contact-form-wrap, .site-footer")
+    ...document.querySelectorAll(".services-intro, .service-row, .services-bridge, .sectors-intro, .sector-item, .services-followup, .method-copy, .team-intro, .team-member, .contact-copy, .contact-form-wrap, .site-footer")
   ];
   const revealObserver = new IntersectionObserver((entries) => {
     for (const entry of entries) {
@@ -87,7 +202,7 @@ if (canAnimate) {
 
   revealTargets.forEach((target, index) => {
     target.classList.add("will-reveal");
-    if (target.matches(".service-row, .sector-item, .coverage-list li")) {
+    if (target.matches(".service-row, .sector-item, .team-member")) {
       target.style.setProperty("--reveal-delay", `${(index % 4) * 90}ms`);
     }
     const bounds = target.getBoundingClientRect();
@@ -148,6 +263,8 @@ if (canAnimate) {
   const sectorSection = document.querySelector(".sectors");
   const sectorList = document.querySelector(".sector-list");
   const sectorRows = [...document.querySelectorAll(".sector-item")];
+  const teamList = document.querySelector(".team-list");
+  const teamRows = [...document.querySelectorAll(".team-member")];
   const desktopScene = window.matchMedia("(min-width: 901px) and (min-height: 680px)");
   const finePointer = window.matchMedia("(pointer: fine) and (min-width: 901px)");
   const clamp = (value) => Math.min(1, Math.max(0, value));
@@ -180,6 +297,7 @@ if (canAnimate) {
     const sequenceHeight = sequence?.clientHeight ?? 0;
     const sectorBounds = sectorSection?.getBoundingClientRect();
     const sectorListBounds = sectorList?.getBoundingClientRect();
+    const teamListBounds = teamList?.getBoundingClientRect();
     const visibleSectors = sectorBounds && sectorBounds.top < viewportHeight && sectorBounds.bottom > 0
       ? sectorRows.map((row) => ({ row, bounds: row.getBoundingClientRect() }))
       : [];
@@ -219,6 +337,23 @@ if (canAnimate) {
         }
       }
       sectorRows.forEach((row) => row.classList.toggle("is-current", row === focusedSector));
+    }
+
+    if (teamListBounds && teamList) {
+      const teamProgress = clamp((viewportHeight * .55 - teamListBounds.top) / Math.max(1, teamListBounds.height));
+      teamList.style.setProperty("--team-progress", String(teamProgress));
+      let focusedMember = null;
+      let nearestMember = Infinity;
+      for (const member of teamRows) {
+        const bounds = member.getBoundingClientRect();
+        if (bounds.top > viewportHeight * .88 || bounds.bottom < viewportHeight * .16) continue;
+        const distance = Math.abs((bounds.top + bounds.bottom) / 2 - viewportHeight * .52);
+        if (distance < nearestMember) {
+          nearestMember = distance;
+          focusedMember = member;
+        }
+      }
+      teamRows.forEach((member) => member.classList.toggle("is-current", member === focusedMember));
     }
 
     if (heroBounds && heroStage) {

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 40">
+  <rect width="76" height="40" fill="#fff"/>
+  <path d="M0 0h76v3.077H0zm0 6.154h76v3.077H0zm0 6.154h76v3.077H0zm0 6.154h76v3.077H0zm0 6.154h76v3.077H0zm0 6.154h76v3.077H0zm0 6.154h76V40H0z" fill="#b22234"/>
+  <rect width="30.4" height="21.538" fill="#3c3b6e"/>
+  <defs><pattern id="stars" width="5.05" height="4.3" patternUnits="userSpaceOnUse"><path d="m2.52.6.4 1.15h1.2l-.97.7.37 1.1-1-.68-1 .68.38-1.1-.98-.7h1.2z" fill="#fff"/></pattern></defs>
+  <rect width="30.4" height="21.538" fill="url(#stars)"/>
+</svg>
