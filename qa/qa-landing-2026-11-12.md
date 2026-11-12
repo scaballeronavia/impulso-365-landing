@@ -22,12 +22,12 @@ Landing estática con tres rutas localizadas, selector de idioma, menú responsi
 | Open Graph y X Cards | PASS local. Tres PNG de 1200 × 630 px (aprox. 330 KB) enlazados por idioma; etiquetas completas en HTML inicial; la vista dinámica también cambia imagen, locale, URL y texto alternativo. La imagen española cargó desde la vista previa local con dimensiones correctas. |
 | Accesibilidad básica | PASS en comprobaciones de estructura: un H1 por página, texto alternativo y dimensiones para imágenes, etiquetas para campos, foco visible, enlaces/controles semánticos y estados anunciados. |
 | Sintaxis y generación | PASS. `scripts/build_i18n.py` se ejecutó y `node --check` terminó sin errores en `site/main.js` y `site/language-init.js`. El sitio no tiene build de producción ni suite de pruebas configurada. |
-| GitHub Pages | Despliegue autorizado tras el PASS local. Lighthouse, Core Web Vitals, VoiceOver/NVDA, validadores externos de HTML y depuradores de vista previa de redes no se ejecutaron. No se afirma conformidad WCAG completa. |
+| GitHub Pages | PASS. Commit `718597b` desplegado. Se abrieron las rutas ES, EN y PT-BR; títulos, idiomas, URL e imagen Open Graph coinciden. Las tres imágenes se cargaron desde HTTPS y se decodificaron a 1200 × 630; sin errores de consola. |
 
-## Validación pendiente después del despliegue
+## Alcance de verificación y pendientes
 
-Al publicar, confirmar HTTP 200 y `Content-Type: image/png` en las tres URL sociales HTTPS y revisar las vistas previas con LinkedIn Post Inspector y Facebook Sharing Debugger. WhatsApp y X pueden conservar tarjetas en caché. Confirmar también que las tres rutas de idioma cargan en GitHub Pages.
+No se ejecutaron Lighthouse, Core Web Vitals, VoiceOver/NVDA, validadores externos de HTML ni depuradores de vista previa de redes. No se afirma conformidad WCAG completa. Las vistas previas de LinkedIn y Facebook se pueden revisar con sus inspectores; WhatsApp y X pueden conservar tarjetas en caché.
 
 ## Alcance de publicación
 
-Publicar únicamente los archivos necesarios de la web y el resumen QA. Mantener documentos de trabajo y materiales fuente fuera del repositorio público.
+Se publicaron únicamente los archivos necesarios de la web y este resumen QA. Los documentos de trabajo y materiales fuente permanecen fuera del repositorio público.
