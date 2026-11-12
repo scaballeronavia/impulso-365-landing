@@ -21,9 +21,10 @@ Landing estática con tres rutas localizadas, selector de idioma, menú responsi
 | SEO e internacionalización | PASS estático. Canonical, `hreflang`, títulos, descripciones y URL Open Graph coinciden con cada idioma. Sitemap contiene las tres rutas. |
 | Open Graph y X Cards | PASS local. Tres PNG de 1200 × 630 px (aprox. 330 KB) enlazados por idioma; etiquetas completas en HTML inicial; la vista dinámica también cambia imagen, locale, URL y texto alternativo. La imagen española cargó desde la vista previa local con dimensiones correctas. |
 | Foto de Jorge Kano | PASS en el sitio público. El retrato actualizado carga en español, inglés y portugués brasileño desde `assets/team/jorge-kano.jpg?v=20261112-jorge2` (655 × 873 px). |
+| Fotos de Rodrigo y Santiago | PASS en el sitio público. Rodrigo (1086 × 1448 px, 79 KB) y Santiago con fondo blanco (1278 × 1230 px, 156 KB) cargan en las tres rutas de idioma; texto alternativo, dimensiones y carga diferida comprobados. |
 | Accesibilidad básica | PASS en comprobaciones de estructura: un H1 por página, texto alternativo y dimensiones para imágenes, etiquetas para campos, foco visible, enlaces/controles semánticos y estados anunciados. |
 | Sintaxis y generación | PASS. `scripts/build_i18n.py` se ejecutó y `node --check` terminó sin errores en `site/main.js` y `site/language-init.js`. El sitio no tiene build de producción ni suite de pruebas configurada. |
-| GitHub Pages | PASS. QA base en commit `718597b`; el retrato nuevo se publicó en `5c34f24` y se confirmó cargado en las tres rutas ES, EN y PT-BR. Los títulos, idiomas, URL e imagen Open Graph de la verificación base coinciden. Las tres imágenes sociales se cargaron desde HTTPS y se decodificaron a 1200 × 630; sin errores de consola. |
+| GitHub Pages | PASS. QA base en `718597b`; el retrato de Jorge se publicó en `5c34f24` y los retratos de Rodrigo y Santiago en `7d5788f`. Se verificaron en vivo ES/EN/PT-BR y 21 anchos de pantalla, sin desbordamiento ni errores de consola. Títulos, rutas e imágenes Open Graph de la verificación base coinciden; las tres imágenes sociales cargaron desde HTTPS a 1200 × 630 px. |
 
 ## Alcance de verificación y pendientes
 
