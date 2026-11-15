@@ -24,7 +24,9 @@ for (const element of document.querySelectorAll("img[src], link[href], script[sr
 const bodyTextNodes = (root) => {
   const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes = [];
-  while (walker.nextNode()) nodes.push(walker.currentNode);
+  while (walker.nextNode()) {
+    if (!walker.currentNode.parentElement?.closest(".turnstile-container")) nodes.push(walker.currentNode);
+  }
   return nodes;
 };
 const localeFromPath = (path) => path.startsWith(siteRoot.pathname + "en/") ? "en" : path.startsWith(siteRoot.pathname + "pt-br/") ? "pt-BR" : "es";
@@ -93,6 +95,10 @@ const applyLocale = async (locale, push = true) => {
   if (push) history.pushState({ locale }, "", localeUrl(locale));
   updateLanguageLinks();
   refreshDynamicLabels();
+  for (const field of formFields) {
+    if (document.getElementById(`inquiry-${field}`)?.getAttribute("aria-invalid") === "true") validateInquiryField(field);
+  }
+  syncTurnstile();
 };
 languageLinks.forEach((link) => link.addEventListener("click", async (event) => {
   if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -144,7 +150,78 @@ if (menuButton && navigation) {
   });
 }
 
-document.querySelector(".inquiry-form")?.addEventListener("submit", (event) => event.preventDefault());
+const inquiryForm = document.querySelector(".inquiry-form");
+const formErrors = {
+  es: { required: "Completa este campo.", contact: "Escribe un correo válido o un teléfono internacional con código de país.", consent: "Debes aceptar el tratamiento de datos para continuar." },
+  en: { required: "Complete this field.", contact: "Enter a valid email or an international phone number with country code.", consent: "Please consent to data processing to continue." },
+  "pt-BR": { required: "Preencha este campo.", contact: "Informe um e-mail válido ou um telefone internacional com código do país.", consent: "Autorize o tratamento de dados para continuar." }
+};
+const formFields = ["name", "company", "contact", "message", "consent"];
+const validateInquiryField = (field, show = true) => {
+  const input = document.getElementById(`inquiry-${field}`);
+  const error = document.getElementById(`inquiry-${field}-error`);
+  if (!input || !error) return true;
+  const value = input.type === "checkbox" ? input.checked : input.value.trim();
+  let message = "";
+  if (!value) message = formErrors[currentLocale][field === "consent" ? "consent" : "required"];
+  if (field === "contact" && value) {
+    const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    const phone = /^\+[1-9]\d{7,14}$/.test(value.replace(/[\s().-]/g, ""));
+    if (!email && !phone) message = formErrors[currentLocale].contact;
+  }
+  if (show) {
+    error.firstChild.nodeValue = message || " ";
+    input.setAttribute("aria-invalid", message ? "true" : "false");
+  }
+  return !message;
+};
+for (const field of formFields) {
+  const input = document.getElementById(`inquiry-${field}`);
+  input?.addEventListener("blur", () => validateInquiryField(field));
+  input?.addEventListener(input.type === "checkbox" ? "change" : "input", () => {
+    if (input.getAttribute("aria-invalid") === "true") validateInquiryField(field);
+  });
+}
+inquiryForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  for (const field of formFields) validateInquiryField(field);
+});
+let turnstileWidget;
+let turnstileToken = "";
+const turnstileContainer = inquiryForm?.querySelector(".turnstile-container");
+const turnstileKey = inquiryForm?.dataset.turnstileSiteKey?.trim();
+const turnstileMessages = {
+  es: { ready: "Completa la verificación de seguridad.", success: "Verificación completada.", error: "No se pudo cargar la verificación de seguridad.", expired: "La verificación caducó; inténtalo de nuevo.", timeout: "La verificación tardó demasiado; inténtalo de nuevo." },
+  en: { ready: "Complete the security check.", success: "Security check complete.", error: "The security check could not load.", expired: "The security check expired; please try again.", timeout: "The security check timed out; please try again." },
+  "pt-BR": { ready: "Conclua a verificação de segurança.", success: "Verificação concluída.", error: "Não foi possível carregar a verificação de segurança.", expired: "A verificação expirou; tente novamente.", timeout: "A verificação demorou demais; tente novamente." }
+};
+const turnstileStatus = inquiryForm?.querySelector(".turnstile-status");
+const setTurnstileStatus = (state) => {
+  if (turnstileStatus?.firstChild) turnstileStatus.firstChild.nodeValue = turnstileMessages[currentLocale][state];
+};
+function syncTurnstile() {
+  if (!turnstileKey || !window.turnstile || !turnstileContainer) return;
+  if (turnstileWidget !== undefined) window.turnstile.remove(turnstileWidget);
+  turnstileToken = "";
+  turnstileContainer.removeAttribute("aria-hidden");
+  setTurnstileStatus("ready");
+  turnstileWidget = window.turnstile.render(turnstileContainer, {
+    sitekey: turnstileKey, theme: "light", size: "flexible", language: currentLocale,
+    callback: (token) => { turnstileToken = token; setTurnstileStatus("success"); },
+    "expired-callback": () => { turnstileToken = ""; setTurnstileStatus("expired"); },
+    "timeout-callback": () => { turnstileToken = ""; setTurnstileStatus("timeout"); },
+    "error-callback": () => { turnstileToken = ""; setTurnstileStatus("error"); }
+  });
+}
+if (turnstileKey && turnstileContainer) {
+  const script = document.createElement("script");
+  script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+  script.async = true;
+  script.defer = true;
+  script.onload = syncTurnstile;
+  script.onerror = () => setTurnstileStatus("error");
+  document.head.append(script);
+}
 for (const portrait of document.querySelectorAll(".team-portrait img[data-fallback-name]")) {
   portrait.addEventListener("error", () => {
     portrait.src = new URL("assets/team/avatar-neutral.svg", siteRoot).href;
