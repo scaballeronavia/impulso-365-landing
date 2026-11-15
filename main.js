@@ -99,6 +99,7 @@ const applyLocale = async (locale, push = true) => {
     if (document.getElementById(`inquiry-${field}`)?.getAttribute("aria-invalid") === "true") validateInquiryField(field);
   }
   syncTurnstile();
+  if (!turnstileKey) setTurnstileStatus(location.protocol === "file:" ? "local" : "preview");
 };
 languageLinks.forEach((link) => link.addEventListener("click", async (event) => {
   if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -189,16 +190,19 @@ inquiryForm?.addEventListener("submit", (event) => {
 let turnstileWidget;
 let turnstileToken = "";
 const turnstileContainer = inquiryForm?.querySelector(".turnstile-container");
-const turnstileKey = inquiryForm?.dataset.turnstileSiteKey?.trim();
+const productionTurnstileKey = inquiryForm?.dataset.turnstileSiteKey?.trim();
+const localTurnstileHost = ["localhost", "127.0.0.1"].includes(location.hostname);
+const productionTurnstileHost = ["impulso365.dev", "www.impulso365.dev"].includes(location.hostname);
+const turnstileKey = localTurnstileHost ? "1x00000000000000000000AA" : productionTurnstileHost ? productionTurnstileKey : "";
 const turnstileMessages = {
   es: { ready: "Completa la verificación de seguridad.", success: "Verificación completada.", error: "No se pudo cargar la verificación de seguridad.", expired: "La verificación caducó; inténtalo de nuevo.", timeout: "La verificación tardó demasiado; inténtalo de nuevo." },
   en: { ready: "Complete the security check.", success: "Security check complete.", error: "The security check could not load.", expired: "The security check expired; please try again.", timeout: "The security check timed out; please try again." },
   "pt-BR": { ready: "Conclua a verificação de segurança.", success: "Verificação concluída.", error: "Não foi possível carregar a verificação de segurança.", expired: "A verificação expirou; tente novamente.", timeout: "A verificação demorou demais; tente novamente." }
 };
 for (const [locale, messages] of Object.entries({
-  es: { local: "La verificación solo funciona en un dominio web autorizado.", domain: "Este dominio no está autorizado para la verificación. Puedes contactarnos por WhatsApp." },
-  en: { local: "Security verification only works on an authorized website domain.", domain: "This domain is not authorized for verification. You can contact us on WhatsApp." },
-  "pt-BR": { local: "A verificação só funciona em um domínio web autorizado.", domain: "Este domínio não está autorizado para a verificação. Entre em contato pelo WhatsApp." }
+  es: { local: "La verificación solo funciona en un dominio web autorizado.", preview: "La verificación estará disponible en el sitio oficial.", domain: "Este dominio no está autorizado para la verificación. Puedes contactarnos por WhatsApp." },
+  en: { local: "Security verification only works on an authorized website domain.", preview: "Security verification will be available on the official website.", domain: "This domain is not authorized for verification. You can contact us on WhatsApp." },
+  "pt-BR": { local: "A verificação só funciona em um domínio web autorizado.", preview: "A verificação estará disponível no site oficial.", domain: "Este domínio não está autorizado para a verificação. Entre em contato pelo WhatsApp." }
 })) Object.assign(turnstileMessages[locale], messages);
 const turnstileStatus = inquiryForm?.querySelector(".turnstile-status");
 const setTurnstileStatus = (state) => {
@@ -226,8 +230,8 @@ if (turnstileKey && turnstileContainer && /^https?:$/.test(location.protocol)) {
   script.onload = syncTurnstile;
   script.onerror = () => setTurnstileStatus("error");
   document.head.append(script);
-} else if (turnstileKey && turnstileContainer) {
-  setTurnstileStatus("local");
+} else if (turnstileContainer) {
+  setTurnstileStatus(location.protocol === "file:" ? "local" : "preview");
 }
 for (const portrait of document.querySelectorAll(".team-portrait img[data-fallback-name]")) {
   portrait.addEventListener("error", () => {
