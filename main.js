@@ -195,6 +195,11 @@ const turnstileMessages = {
   en: { ready: "Complete the security check.", success: "Security check complete.", error: "The security check could not load.", expired: "The security check expired; please try again.", timeout: "The security check timed out; please try again." },
   "pt-BR": { ready: "Conclua a verificação de segurança.", success: "Verificação concluída.", error: "Não foi possível carregar a verificação de segurança.", expired: "A verificação expirou; tente novamente.", timeout: "A verificação demorou demais; tente novamente." }
 };
+for (const [locale, messages] of Object.entries({
+  es: { local: "La verificación solo funciona en un dominio web autorizado.", domain: "Este dominio no está autorizado para la verificación. Puedes contactarnos por WhatsApp." },
+  en: { local: "Security verification only works on an authorized website domain.", domain: "This domain is not authorized for verification. You can contact us on WhatsApp." },
+  "pt-BR": { local: "A verificação só funciona em um domínio web autorizado.", domain: "Este domínio não está autorizado para a verificação. Entre em contato pelo WhatsApp." }
+})) Object.assign(turnstileMessages[locale], messages);
 const turnstileStatus = inquiryForm?.querySelector(".turnstile-status");
 const setTurnstileStatus = (state) => {
   if (turnstileStatus?.firstChild) turnstileStatus.firstChild.nodeValue = turnstileMessages[currentLocale][state];
@@ -210,10 +215,10 @@ function syncTurnstile() {
     callback: (token) => { turnstileToken = token; setTurnstileStatus("success"); },
     "expired-callback": () => { turnstileToken = ""; setTurnstileStatus("expired"); },
     "timeout-callback": () => { turnstileToken = ""; setTurnstileStatus("timeout"); },
-    "error-callback": () => { turnstileToken = ""; setTurnstileStatus("error"); }
+    "error-callback": (code) => { turnstileToken = ""; setTurnstileStatus(String(code) === "110200" ? "domain" : "error"); return true; }
   });
 }
-if (turnstileKey && turnstileContainer) {
+if (turnstileKey && turnstileContainer && /^https?:$/.test(location.protocol)) {
   const script = document.createElement("script");
   script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
   script.async = true;
@@ -221,6 +226,8 @@ if (turnstileKey && turnstileContainer) {
   script.onload = syncTurnstile;
   script.onerror = () => setTurnstileStatus("error");
   document.head.append(script);
+} else if (turnstileKey && turnstileContainer) {
+  setTurnstileStatus("local");
 }
 for (const portrait of document.querySelectorAll(".team-portrait img[data-fallback-name]")) {
   portrait.addEventListener("error", () => {
