@@ -84,4 +84,4 @@ impulso365.dev {
 }
 ```
 
-Caddy emite y renueva los certificados automáticamente. El workflow de despliegue automático se ejecuta cuando se combina un pull request a `main`; las actualizaciones directas de GitHub Pages se publican desde la rama principal.
+Caddy emite y renueva los certificados automáticamente. Las actualizaciones de `impulso365.dev` se despliegan cuando se combina un pull request a `main`: el servidor obtiene esa rama y reconstruye el contenedor. GitHub Pages se actualiza directamente desde la rama principal y funciona como vista previa.
