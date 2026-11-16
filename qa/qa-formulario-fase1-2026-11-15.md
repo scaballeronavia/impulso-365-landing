@@ -14,4 +14,8 @@
 | Recursos y seguridad | PASS limitado | Sin imágenes rotas ni errores de consola; no hay Secret Key en el frontend, almacenamiento de datos del formulario ni petición al CRM. |
 | Rendimiento, lectores de pantalla y otros navegadores | NOT TESTED | No hay Lighthouse comparable ni auditoría asistiva integral; no se afirma conformidad WCAG completa. |
 
-**Decisión:** apto para publicar el código preparado en GitHub Pages, manteniendo el formulario sin envío. La activación comercial del formulario requiere política legal aprobada, backend con validación Siteverify y QA del widget real en `impulso365.dev`.
+**Nota de producción (16 nov. 2026):** el HTML servía la ruta cacheada `main.js?v=20261112-i18n2`, a pesar de que la integración Turnstile se añadió después. En producción el widget no se insertaba y quedaba el texto inicial. Se actualizó la referencia versionada a `20261116-turnstile`; la clave de prueba completó Turnstile en local. Pendiente repetir la verificación en GitHub Pages y en producción después de desplegar el cambio.
+
+**Despliegue:** el PR #2 se combinó el 16 de noviembre de 2026 (commit `896af59`). GitHub Actions completó el despliegue a `impulso365.dev`; se verificó respuesta HTTP 200 y que el dominio sirve el HTML y CSS actualizados, incluida la alineación de “Servicio de interés”. Las ramas `main` y `develop` quedaron sincronizadas en `896af59`.
+
+**Decisión:** el código preparado está publicado en GitHub Pages y en `impulso365.dev`; el formulario permanece sin envío. Activarlo requiere política legal aprobada, backend con validación Siteverify y QA funcional del widget real en producción.
